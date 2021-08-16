@@ -1,10 +1,9 @@
 import os
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import RepeatedKFold
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
 
 """
 Get the data with kaggle API
@@ -27,7 +26,6 @@ if os.path.isfile('test.csv') and os.path.isfile(filename + '.zip'):
 """
 Read data and split to train test
 """
-
 df_train: pd.DataFrame = pd.read_csv('train.csv')  # read data
 
 # Split to features (X) and lable (y)
@@ -58,14 +56,14 @@ grid = {'max_features': max_features,
 
 # define model
 rf = RandomForestRegressor()
-# define model evaluation method
-cv = RepeatedKFold(n_splits=5, n_repeats=1, random_state=217)
 # define search
-grid_search = GridSearchCV(estimator=rf,
-                           param_grid=grid,
-                           scoring='neg_root_mean_squared_error',
-                           cv=cv,
-                           n_jobs=-1)
+grid_search = RandomizedSearchCV(estimator=rf,
+                                 param_distributions=grid,
+                                 n_iter=100,
+                                 scoring='neg_root_mean_squared_error',
+                                 cv=3,
+                                 verbose=2,
+                                 n_jobs=-1)
 # perform the search
 results = grid_search.fit(X_train, y_train)
 
@@ -77,10 +75,8 @@ results = grid_search.fit(X_train, y_train)
 best_grid = grid_search.best_estimator_
 
 rf_cv = RandomForestRegressor(max_features=best_grid.get('max_features'),
-                              min_samples_split=best_grid.get(
-                                  'min_samples_split'),
-                              min_samples_leaf=best_grid.get(
-                                  'min_samples_leaf'),
+                              min_samples_split=best_grid.get('min_samples_split'),
+                              min_samples_leaf=best_grid.get('min_samples_leaf'),
                               n_estimators=best_grid.get('n_estimators'),
                               bootstrap=best_grid.get('bootstrap'))
 
