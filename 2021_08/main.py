@@ -1,8 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import RepeatedKFold
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 
 """
@@ -37,33 +36,28 @@ y_train: np.ndarray = data_train[:, -1]
 """
 Random Forest Model
 """
-# Number of trees
-n_estimators = [100, 200, 300, 1000]
+
 # Number of features to consider at every split
-max_features = [int(x) for x in np.linspace(start=1, stop=99, num=2)]
+max_features = [int(x) for x in np.linspace(start=1, stop=20, num=2)]
 # Minimum number of samples required to split a node
-min_samples_split = [2, 5, 10]
+min_samples_split = [5, 10]
 # Minimum number of samples required at each leaf node
-min_samples_leaf = [1, 2, 4]
-# Method of selecting samples for training each tree
-bootstrap = [True, False]
+
+
 # Create the grid
 grid = {'max_features': max_features,
         'min_samples_split': min_samples_split,
-        'min_samples_leaf': min_samples_leaf,
-        'n_estimators': n_estimators,
-        'bootstrap': bootstrap}
+        }
 
 # define model
 rf = RandomForestRegressor()
 # define search
-grid_search = RandomizedSearchCV(estimator=rf,
-                                 param_distributions=grid,
-                                 n_iter=100,
-                                 scoring='neg_root_mean_squared_error',
-                                 cv=3,
-                                 verbose=2,
-                                 n_jobs=-1)
+grid_search = GridSearchCV(estimator=rf,
+                            param_grid=grid,
+                            scoring='neg_root_mean_squared_error',
+                            cv=3,
+                            verbose=2,
+                            n_jobs=-1)
 # perform the search
 results = grid_search.fit(X_train, y_train)
 
@@ -75,10 +69,8 @@ results = grid_search.fit(X_train, y_train)
 best_grid = grid_search.best_estimator_
 
 rf_cv = RandomForestRegressor(max_features=best_grid.get('max_features'),
-                              min_samples_split=best_grid.get('min_samples_split'),
-                              min_samples_leaf=best_grid.get('min_samples_leaf'),
-                              n_estimators=best_grid.get('n_estimators'),
-                              bootstrap=best_grid.get('bootstrap'))
+                              min_samples_split=best_grid.get('min_samples_split')
+                              )
 
 rf_cv.fit(X_train, y_train)
 
