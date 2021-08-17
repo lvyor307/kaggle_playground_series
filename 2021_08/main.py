@@ -125,16 +125,10 @@ if __name__ == "__main__":
     filename: str = 'tabular-playground-series-aug-2021'
     get_data_from_kaggle_with_API(filename)
     X_train, X_test, y_train, y_test = read_data_and_split_to_train_test()
-    # loss_rf, model_rf = applay_random_forest_to_data(X_train, X_test, X_test)
+    loss_rf, model_rf = applay_random_forest_to_data(X_train, X_test, X_test)
     loss_ridge, model_ridge = applay_ridge_reg_to_data(X_train, y_train, X_test)
-    # MSE_rf, MSE_ridge = models_evaluation(loss_rf,loss_ridge, y_test)
-    df_test: pd.DataFrame = pd.read_csv('test.csv')  # read data
-
-    data_test: np.ndarray = df_test.values
-    X_test: np.ndarray = data_test[:, 1:]  
-
-    loss = model_ridge.predict(X_test)
-    # if MSE_rf < MSE_ridge:
-    #     write_presictions_to_csv(model_rf)
-    # else:
-    #     write_presictions_to_csv(model_ridge)
+    MSE_rf, MSE_ridge = models_evaluation(loss_rf,loss_ridge, y_test)
+    if MSE_rf < MSE_ridge:
+        write_presictions_to_csv(model_rf)
+    else:
+        write_presictions_to_csv(model_ridge)
