@@ -5,6 +5,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 
@@ -45,7 +46,7 @@ def read_data_and_split_to_train_test():
 """
 Random Forest Model
 """
-def applay_random_forest_to_data(X_train: np.ndarray, y_train: np.ndarray) -> np.ndarray:
+def applay_random_forest_to_data(X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray):
     # Number of features to consider at every split
     max_features = [int(x) for x in np.linspace(start=3, stop=99, num=10)]
     # Minimum number of samples required to split a node
@@ -72,13 +73,13 @@ def applay_random_forest_to_data(X_train: np.ndarray, y_train: np.ndarray) -> np
     best_model_rf.fit(X_train, y_train)
 
     loss = best_model_rf.predict(X_test)
-    return loss
+    return loss, best_model_rf
 
 
 """
 Ridge regression model
 """
-def applay_ridge_reg_to_data(X_train: np.ndarray, y_train: np.ndarray) -> np.ndarray:
+def applay_ridge_reg_to_data(X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray):
     ridge = Ridge()
     grid = dict()
     grid['alpha'] = [x for x in np.linspace(start=0, stop=4, num=100)]
@@ -95,12 +96,39 @@ def applay_ridge_reg_to_data(X_train: np.ndarray, y_train: np.ndarray) -> np.nda
     best_model_ridge.fit(X_train, y_train)
 
     loss = best_model_ridge.predict(X_test)
-    return loss
+    return loss, best_model_ridge
 
+
+def models_evaluation(loss_rf,loss_ridge, y_test):
+    MSE_rf =  mean_squared_error(loss_rf,y_test)
+    R2_rf = r2_score(loss_rf,y_test)
+
+    MSE_ridge = mean_squared_error(loss_ridge,y_test)
+    R2_ridge = r2_score(loss_ridge,y_test)
+    return MSE_rf, MSE_ridge
+
+
+def write_presictions_to_csv(best_model):
+    df_test: pd.DataFrame = pd.read_csv('test.csv')  # read data
+
+    data_test: np.ndarray = df_test.values
+    X_test: np.ndarray = data_test[:, 1:]  
+
+    loss = best_model.predict(X_test)
+    prediction: pd.DataFrame = pd.DataFrame({
+        'id': df_test.values[:, 0].astype(int),
+        'loss': loss
+    })
+    prediction.to_csv('prediction.csv', index=False)
 
 if __name__ == "__main__":
     filename: str = 'tabular-playground-series-aug-2021'
     get_data_from_kaggle_with_API(filename)
     X_train, X_test, y_train, y_test = read_data_and_split_to_train_test()
-    loss_rf = applay_random_forest_to_data(X_train, X_test)
-    loss_ridge = applay_ridge_reg_to_data(X_train, y_train)
+    loss_rf, model_rf = applay_random_forest_to_data(X_train, X_test, X_test)
+    loss_ridge, model_ridge = applay_ridge_reg_to_data(X_train, y_train, X_test)
+    MSE_rf, MSE_ridge = models_evaluation(loss_rf,loss_ridge, y_test)
+    if MSE_rf < MSE_ridge:
+        write_presictions_to_csv(model_rf)
+    else:
+        write_presictions_to_csv(model_ridge)
