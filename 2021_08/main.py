@@ -99,7 +99,6 @@ def applay_ridge_reg_to_data(X_train: np.ndarray, y_train: np.ndarray) -> np.nda
 
 
 if __name__ == "__main__":
-
     filename: str = 'tabular-playground-series-aug-2021'
     get_data_from_kaggle_with_API(filename)
     X_train, X_test, y_train, y_test = read_data_and_split_to_train_test()
